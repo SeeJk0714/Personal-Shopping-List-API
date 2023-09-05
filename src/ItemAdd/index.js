@@ -13,6 +13,7 @@ import {
 } from "@mantine/core";
 import { Link, useNavigate } from "react-router-dom";
 import { notifications } from "@mantine/notifications";
+import { useMutation } from "@tanstack/react-query";
 
 const addItem = async (data) => {
     const response = await axios({
@@ -50,48 +51,16 @@ function ItemAdd() {
         },
     });
 
-    const handleAddNewMovie = async (event) => {
+    const handleAddNewItem = async (event) => {
         event.preventDefault();
         createMutation.mutate(
             JSON.stringify({
-                title: title,
-                director: director,
-                release_year: releaseYear,
-                genre: genre,
-                rating: rating,
+                name: name,
+                quantity: quantity,
+                unit: unit,
+                priority: priority,
             })
         );
-
-        // const handleAddNewShoppingList = async (event) => {
-        //     event.preventDefault();
-        //     try {
-        //         const response = await axios({
-        //             method: "POST",
-        //             url: "http://localhost:5000/items",
-        //             headers: {
-        //                 "Content-Type": "application/json",
-        //             },
-        //             data: JSON.stringify({
-        //                 name: name,
-        //                 quantity: quantity,
-        //                 unit: unit,
-        //                 priority: priority,
-        //             }),
-        //         });
-        //         //show and success message
-        //         notifications.show({
-        //             title: "Shopping List Added",
-        //             color: "green",
-        //         });
-
-        //         // redirect back to home page
-        //         navigate("/");
-        //     } catch (error) {
-        //         notifications.show({
-        //             title: error.response.data.message,
-        //             color: "red",
-        //         });
-        //     }
     };
 
     return (
@@ -144,7 +113,7 @@ function ItemAdd() {
                     onChange={(event) => setPriority(event.target.value)}
                 />
                 <Space h="20px" />
-                <Button fullWidth onClick={handleAddNewShoppingList}>
+                <Button fullWidth onClick={handleAddNewItem}>
                     Add New Shopping List
                 </Button>
             </Card>

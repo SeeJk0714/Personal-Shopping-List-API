@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import {
     Container,
-    name,
     Space,
     Card,
     TextInput,
@@ -13,6 +12,24 @@ import {
 } from "@mantine/core";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { notifications } from "@mantine/notifications";
+import { useQuery, useMutation } from "@tanstack/react-query";
+
+const getItem = async (id) => {
+    const response = await axios.get("http://localhost:5000/items/" + id);
+    return response.data;
+};
+
+const updateItem = async ({ id, data }) => {
+    const response = await axios({
+        method: "PUT",
+        url: "http://localhost:5000/items/" + id,
+        headers: {
+            "Content-Type": "application/json",
+        },
+        data: data,
+    });
+    return response.data;
+};
 
 function ItemEdit() {
     const { id } = useParams();
@@ -21,55 +38,47 @@ function ItemEdit() {
     const [quantity, setQuantity] = useState("");
     const [unit, setUnit] = useState("");
     const [priority, setPriority] = useState("");
+    const { data } = useQuery({
+        queryKey: ["item", id],
+        queryFn: () => getItem(id),
+        onSuccess: (data) => {
+            setName(data.name);
+            setQuantity(data.quantity);
+            setUnit(data.unit);
+            setPriority(data.priority);
+        },
+    });
 
-    useEffect(() => {
-        axios
-            .get("http://localhost:5000/items/" + id)
-            .then((response) => {
-                // set value for every fields
-                setName(response.data.name);
-                setQuantity(response.data.quantity);
-                setUnit(response.data.unit);
-                setPriority(response.data.priority);
-            })
-            .catch((error) => {
-                notifications.show({
-                    name: error.response.data.message,
-                    color: "red",
-                });
+    const updateMutation = useMutation({
+        mutationFn: updateItem,
+        onSuccess: () => {
+            // show add success message
+            notifications.show({
+                title: "Shopping List Edited",
+                color: "green",
             });
-    }, []);
+            // redirect back to home page
+            navigate("/");
+        },
+        onError: (error) => {
+            notifications.show({
+                title: error.response.data.message,
+                color: "red",
+            });
+        },
+    });
 
     const handleUpdateItem = async (event) => {
         event.preventDefault();
-        try {
-            const response = await axios({
-                method: "PUT",
-                url: "http://localhost:5000/items/" + id,
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                data: JSON.stringify({
-                    name: name,
-                    quantity: quantity,
-                    unit: unit,
-                    priority: priority,
-                }),
-            });
-            //show and success message
-            notifications.show({
-                name: "Shopping List Added",
-                color: "green",
-            });
-
-            // redirect back to home page
-            navigate("/");
-        } catch (error) {
-            notifications.show({
-                name: error.response.data.message,
-                color: "red",
-            });
-        }
+        updateMutation.mutate({
+            id: id,
+            data: JSON.stringify({
+                name: name,
+                quantity: quantity,
+                unit: unit,
+                priority: priority,
+            }),
+        });
     };
 
     return (
